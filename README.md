@@ -19,3 +19,30 @@ A solution for each quiz is presented in the solution directory.
 
 The *Global Kinematic Quiz* and *Polynomial Fitting* quizzes have all the dependencies in repo. For the *MPC* quiz
 you'll have to install Ipopt and CppAD.  Please refer to [this document](https://github.com/udacity/CarND-MPC-Quizzes/blob/master/install_Ipopt_CppAD.md) for installation instructions.
+
+
+# CarND-18-Motion-Planning-MPC-Model-Predictive-Control
+
+### Global Kinematic Model
+
+```cpp
+next_state(0) = x + v * cos(psi) * dt;
+next_state(1) = y + v * sin(psi) * dt;
+next_state(2) = psi + v / Lf * delta * dt;
+next_state(3) = v + a * dt;
+```
+
+### Cross Track Error
+
+CTE is the difference between the line and the current vehicle position.
+```cpp
+double cte = polyeval(coeffs, x) - y;
+```
+
+### Orientation Error
+
+```cpp
+// derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
+double epsi = psi - atan(coeffs[1]);
+```
+
