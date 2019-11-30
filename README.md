@@ -46,3 +46,59 @@ double cte = polyeval(coeffs, x) - y;
 double epsi = psi - atan(coeffs[1]);
 ```
 
+### MPC
+
+Solve the model given an initial state and return the next state and actuations as a vector.
+
+1. Set the initial variable values
+```cpp
+vars[x_start] = x;
+vars[y_start] = y;
+vars[psi_start] = psi;
+vars[v_start] = v;
+vars[cte_start] = cte;
+vars[epsi_start] = epsi;
+```
+
+2. Set lower and upper limits.
+```cpp
+// The upper and lower limits of delta are set to -25 and 25
+// degrees (values in radians).
+for (int i = delta_start; i < a_start; ++i) {
+  vars_lowerbound[i] = -0.436332;
+  vars_upperbound[i] = 0.436332;
+}
+
+// Acceleration/decceleration upper and lower limits.
+// NOTE: Feel free to change this to something else.
+for (int i = a_start; i < n_vars; ++i) {
+  vars_lowerbound[i] = -1.0;
+  vars_upperbound[i] = 1.0;
+}
+```
+
+3. Set lower and upper limits for constraints.
+```cpp
+constraints_lowerbound[x_start] = x;
+constraints_lowerbound[y_start] = y;
+constraints_lowerbound[psi_start] = psi;
+constraints_lowerbound[v_start] = v;
+constraints_lowerbound[cte_start] = cte;
+constraints_lowerbound[epsi_start] = epsi;
+```
+
+4. Solve the problem.
+```cpp
+CppAD::ipopt::solve<Dvector, FG_eval>(
+      options, vars, vars_lowerbound, vars_upperbound, constraints_lowerbound,
+      constraints_upperbound, fg_eval, solution);
+```
+      
+5. Check some of the solution values.
+```cpp
+ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
+```
+
+
+
+```
