@@ -99,6 +99,10 @@ CppAD::ipopt::solve<Dvector, FG_eval>(
 ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 ```
 
+### FG_eval
 
+input:
 
-```
+- `fg` is a vector containing the cost and constraints.
+- `vars` is a vector containing the variable values (state & actuators).
+
