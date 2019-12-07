@@ -48,20 +48,6 @@ next_state(2) = psi + v / Lf * delta * dt;
 next_state(3) = v + a * dt;
 ```
 
-### Cross Track Error
-
-CTE is the difference between the line and the current vehicle position.
-```cpp
-double cte = polyeval(coeffs, x) - y;
-```
-
-### Orientation Error
-
-```cpp
-// derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
-double epsi = psi - atan(coeffs[1]);
-```
-
 ### Tools
 
 #### Ipopt
@@ -71,6 +57,25 @@ Ipopt is the tool we'll be using to optimize the control inputs. It's able to fi
 #### CppAD
 
 CppAD is a library we'll use for automatic differentiation.
+
+### Main
+
+#### Fitting a polynomial to the waypoints
+
+```python
+auto coeffs = polyfit(ptsx, ptsy, 1);
+```
+
+#### Calculating the cross track and orientation error
+
+```cpp
+double cte = polyeval(coeffs, x) - y;
+```
+
+```cpp
+// derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
+double epsi = psi - atan(coeffs[1]);
+```
 
 ### MPC
 
@@ -164,4 +169,64 @@ To make control decisions more consistent, or smoother.
 ```python
 fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
 fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+```
+
+#### Setup Constraints
+
+1. Initial constraints
+
+We initialize the model to the initial state.
+
+```python
+fg[1 + x_start] = vars[x_start];
+fg[1 + y_start] = vars[y_start];
+fg[1 + psi_start] = vars[psi_start];
+fg[1 + v_start] = vars[v_start];
+fg[1 + cte_start] = vars[cte_start];
+fg[1 + epsi_start] = vars[epsi_start];
+```
+
+2. The rest of the constraints
+
+All the other constraints based on the vehicle model.
+
+Previously, we have set the corresponding `constraints_lowerbound` and the `constraints_upperbound` values to 0. That means the solver will force this value of `fg` to always be 0.
+
+For example:
+
+```python
+for (int t = 1; t < N ; ++t) {
+  // psi, v, delta at time t
+  AD<double> psi0 = vars[psi_start + t - 1];
+  AD<double> v0 = vars[v_start + t - 1];
+  AD<double> delta0 = vars[delta_start + t - 1];
+
+  // psi at time t+1
+  AD<double> psi1 = vars[psi_start + t];
+
+  // how psi changes
+  fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
+}
+```
+
+Coding up the other parts of the model is similar:
+
+```python
+// The idea here is to constraint this value to be 0.
+//
+// Recall the equations for the model:
+// x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+// y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+// psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+// v_[t+1] = v[t] + a[t] * dt
+// cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+// epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
+fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
+fg[1 + cte_start + t] =
+    cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
+fg[1 + epsi_start + t] =
+    epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
 ```
