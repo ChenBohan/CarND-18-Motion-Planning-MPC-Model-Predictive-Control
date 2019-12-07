@@ -23,6 +23,22 @@ you'll have to install Ipopt and CppAD.  Please refer to [this document](https:/
 
 # CarND-18-Motion-Planning-MPC-Model-Predictive-Control
 
+### Overview
+
+We use MPC to follow the trajectory along a line.
+
+Steps:
+
+1. Set N and dt.
+
+2. Fit the polynomial to the waypoints.
+
+3. Calculate initial cross track error and orientation error values.
+
+4. Define the components of the cost function (state, actuators, etc).
+
+5. Define the model constraints. 
+
 ### Global Kinematic Model
 
 ```cpp
@@ -46,11 +62,21 @@ double cte = polyeval(coeffs, x) - y;
 double epsi = psi - atan(coeffs[1]);
 ```
 
+### Tools
+
+#### Ipopt
+
+Ipopt is the tool we'll be using to optimize the control inputs. It's able to find locally optimal values (non-linear problem!) while keeping the constraints set directly to the actuators and the constraints defined by the vehicle model.
+
+#### CppAD
+
+CppAD is a library we'll use for automatic differentiation.
+
 ### MPC
 
 Solve the model given an initial state and return the next state and actuations as a vector.
 
-1. Set the initial variable values
+#### 1. Set the initial variable values
 ```cpp
 vars[x_start] = x;
 vars[y_start] = y;
@@ -60,7 +86,7 @@ vars[cte_start] = cte;
 vars[epsi_start] = epsi;
 ```
 
-2. Set lower and upper limits.
+#### 2. Set lower and upper limits.
 ```cpp
 // The upper and lower limits of delta are set to -25 and 25
 // degrees (values in radians).
@@ -77,7 +103,7 @@ for (int i = a_start; i < n_vars; ++i) {
 }
 ```
 
-3. Set lower and upper limits for constraints.
+#### 3. Set lower and upper limits for constraints.
 ```cpp
 constraints_lowerbound[x_start] = x;
 constraints_lowerbound[y_start] = y;
@@ -87,22 +113,23 @@ constraints_lowerbound[cte_start] = cte;
 constraints_lowerbound[epsi_start] = epsi;
 ```
 
-4. Solve the problem.
+#### 4. Solve the problem.
 ```cpp
 CppAD::ipopt::solve<Dvector, FG_eval>(
       options, vars, vars_lowerbound, vars_upperbound, constraints_lowerbound,
       constraints_upperbound, fg_eval, solution);
 ```
       
-5. Check some of the solution values.
+#### 5. Check some of the solution values.
 ```cpp
 ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 ```
 
 ### FG_eval
 
-input:
+1. input
 
 - `fg` is a vector containing the cost and constraints.
 - `vars` is a vector containing the variable values (state & actuators).
 
+2. 
