@@ -127,9 +127,41 @@ ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
 ### FG_eval
 
-1. input
+#### Constructor
 
-- `fg` is a vector containing the cost and constraints.
-- `vars` is a vector containing the variable values (state & actuators).
+- `coeffs` are the coefficients of the fitted polynomial. `coeffs` will be used by the cross track error and heading error equations.
 
-2. 
+#### Input
+
+- `fg` is a vector containing the cost function and vehicle model/constraints
+- `vars` is a vector containing the variable values (state & actuators) used by the cost function and model.
+
+#### Cost function
+
+1. Based on the reference state.
+
+cross-track error, heading error, and velocity error.
+
+```python
+fg[0] += CppAD::pow(vars[cte_start + t], 2);
+fg[0] += CppAD::pow(vars[epsi_start + t], 2);
+fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+```
+
+2. Minimize the use of actuators.
+
+A further enhancement is to constrain erratic control inputs.
+
+```python
+fg[0] += CppAD::pow(vars[delta_start + t], 2);
+fg[0] += CppAD::pow(vars[a_start + t], 2);
+```
+
+3. Minimize the value gap between sequential actuations.
+
+To make control decisions more consistent, or smoother.
+
+```python
+fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+```
