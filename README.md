@@ -110,12 +110,24 @@ for (int i = a_start; i < n_vars; ++i) {
 
 #### 3. Set lower and upper limits for constraints.
 ```cpp
+// Lower and upper limits for constraints
+// All of these should be 0 except the initial
+// state indices.
+Dvector constraints_lowerbound(n_constraints);
+Dvector constraints_upperbound(n_constraints);
+for (int i = 0; i < n_constraints; ++i) {
+  constraints_lowerbound[i] = 0;
+  constraints_upperbound[i] = 0;
+}
 constraints_lowerbound[x_start] = x;
 constraints_lowerbound[y_start] = y;
 constraints_lowerbound[psi_start] = psi;
 constraints_lowerbound[v_start] = v;
 constraints_lowerbound[cte_start] = cte;
 constraints_lowerbound[epsi_start] = epsi;
+
+constraints_upperbound[x_start] = x;
+...
 ```
 
 #### 4. Solve the problem.
