@@ -81,6 +81,23 @@ double epsi = psi - atan(coeffs[1]);
 
 Solve the model given an initial state and return the next state and actuations as a vector.
 
+#### Input
+
+- `x0` is the initial state.
+
+- `coeffs` are the coefficients of the fitting polynomial.
+
+#### Output
+
+Return the next state and actuations as a vector.
+
+```python
+return {solution.x[x_start + 1],   solution.x[y_start + 1],
+        solution.x[psi_start + 1], solution.x[v_start + 1],
+        solution.x[cte_start + 1], solution.x[epsi_start + 1],
+        solution.x[delta_start],   solution.x[a_start]};
+```
+
 #### 1. Set the initial variable values
 ```cpp
 vars[x_start] = x;
@@ -150,7 +167,8 @@ ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
 #### Input
 
-- `fg` is a vector containing the cost function and vehicle model/constraints
+- `fg` is a vector containing the cost function and vehicle model/constraints.
+
 - `vars` is a vector containing the variable values (state & actuators) used by the cost function and model.
 
 #### Cost function
@@ -233,7 +251,8 @@ Coding up the other parts of the model is similar:
 // v_[t+1] = v[t] + a[t] * dt
 // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
 // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
-fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+fg[1 + x_start + t] = x1 - (
++ v0 * CppAD::cos(psi0) * dt);
 fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
 fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
 fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
@@ -242,3 +261,21 @@ fg[1 + cte_start + t] =
 fg[1 + epsi_start + t] =
     epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
 ```
+
+### Nonlinear Programming Solver `ipopt::solve`
+
+#### parameters
+
+- `options`: list of options, one for each line.
+
+- `xi`: initial argument value to start optimization procedure at.
+
+- `xl`: lower limit for argument during optimization
+
+- `xu`: upper limit for argument during optimization
+
+- `gl`: lower limit for g(x) during optimization.
+
+- `gu`: upper limit for g(x) during optimization.
+
+- `fg_eval`: function that evaluates the objective and constraints using the syntax `fg_eval(fg, x)`
