@@ -62,7 +62,7 @@ CppAD is a library we'll use for automatic differentiation.
 
 #### Fitting a polynomial to the waypoints
 
-```python
+```cpp
 auto coeffs = polyfit(ptsx, ptsy, 1);
 ```
 
@@ -91,7 +91,7 @@ Solve the model given an initial state and return the next state and actuations 
 
 Return the next state and actuations as a vector.
 
-```python
+```cpp
 return {solution.x[x_start + 1],   solution.x[y_start + 1],
         solution.x[psi_start + 1], solution.x[v_start + 1],
         solution.x[cte_start + 1], solution.x[epsi_start + 1],
@@ -187,7 +187,7 @@ fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
 
 A further enhancement is to constrain erratic control inputs.
 
-```python
+```cpp
 fg[0] += CppAD::pow(vars[delta_start + t], 2);
 fg[0] += CppAD::pow(vars[a_start + t], 2);
 ```
@@ -196,7 +196,7 @@ fg[0] += CppAD::pow(vars[a_start + t], 2);
 
 To make control decisions more consistent, or smoother.
 
-```python
+```cpp
 fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
 fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
 ```
@@ -207,7 +207,7 @@ fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
 
 We initialize the model to the initial state.
 
-```python
+```cpp
 fg[1 + x_start] = vars[x_start];
 fg[1 + y_start] = vars[y_start];
 fg[1 + psi_start] = vars[psi_start];
@@ -224,7 +224,7 @@ Previously, we have set the corresponding `constraints_lowerbound` and the `cons
 
 For example:
 
-```python
+```cpp
 for (int t = 1; t < N ; ++t) {
   // psi, v, delta at time t
   AD<double> psi0 = vars[psi_start + t - 1];
@@ -241,7 +241,7 @@ for (int t = 1; t < N ; ++t) {
 
 Coding up the other parts of the model is similar:
 
-```python
+```cpp
 // The idea here is to constraint this value to be 0.
 //
 // Recall the equations for the model:
